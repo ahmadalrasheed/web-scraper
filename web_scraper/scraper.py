@@ -1,77 +1,58 @@
 import requests
 from bs4 import BeautifulSoup
-domain = "https://www.bayt.com"
-bayt_url = f"{domain}/en/jordan/jobs/software-developer-jobs/"
-response = requests.get(bayt_url)
-html_text = response.text
-print(response.text)
-# with open("file.html", "w") as file:
-#     file.write(html_text)
-# print(html_text)
-quit()
 
 
-soup = BeautifulSoup(html_text, "html.parser")
-result = soup.find("div", id="results_inner_card")
-jobs = result.find_all("li", class_="has-pointer-d")
-print(len(jobs))
-print(jobs[0])
+def get_citations_needed_count(url:str):
+    """
+    get_citations_needed_count function web scrapes a webpage and reports the number of citations needed.
+    Arguments: 
+    url: String
+    Return: Integer number of needed citations.
+    """
 
-title = jobs[0].find("h2").text.strip()
-company = jobs[0].find("b").text.strip()
-desc = jobs[0].find("p").text.strip()
-salary_container = jobs[1].find("i", class_="is-salary")
-salary = salary_container.parent.text.strip() if salary_container else None
-# .parent.text.strip()
-link = f"{domain}{jobs[0].find('a').get('href')}"
+    wiki_page = requests.get(url)
+    soup = BeautifulSoup(wiki_page.content, "html.parser")
 
-print(title)
-print(company)
-print(desc)
-print(link)
-print(salary)
-cleaned_jobs = []
-for job in jobs:
-    title = job.find("h2").text.strip()
-    company = job.find("b").text.strip()
-    desc = job.find("p").text.strip()
-    link = f"{domain}{job.find('a').get('href')}"
-    salary_container = job.find("i", class_="is-salary")
-    salary = salary_container.parent.text.strip() if salary_container else None
-    cleaned_job = {
-        "title": title,
-        "company": company,
-        "desc": desc,
-        "link": link,
-        "salary": salary,
-    }
-    cleaned_jobs.append(cleaned_job)
-print(cleaned_jobs)
+    citations = soup.find_all(class_ = "noprint Inline-Template Template-Fact")
+
+    print (len(citations))
+    return len(citations)
 
 
-def clean_job(dirty_job):
-    title = dirty_job.find("h2").text.strip()
-    company = dirty_job.find("b").text.strip()
-    desc = dirty_job.find("p").text.strip()
-    link = f"{domain}{dirty_job.find('a').get('href')}"
-    salary_container = job.find("i", class_="is-salary")
-    salary = salary_container.parent.text.strip() if salary_container else None
-    return {
-        "title": title,
-        "company": company,
-        "desc": desc,
-        "link": link,
-        "salary": salary,
-    }
 
 
-cleaned_jobs = [clean_job(job) for job in jobs]
-print(cleaned_jobs)
+def get_citations_needed_report(url:str):
+    """
+    get_citations_needed_report function web scrapes a webpage and reports passages where citations are needed.
+    Arguments: 
+    url: String
+    Return: Strings of preceding passages.
+    """
+    separate_text = []
+    output_string = ""
+
+    wiki_page = requests.get(url)
+    soup = BeautifulSoup(wiki_page.content, "html.parser")
+
+    citations = soup.find_all("p")
+    for citation in citations:
+        if citation.find(class_ = "noprint Inline-Template Template-Fact"):
+            scraped_text = citation.get_text()
+            separate_text.append(scraped_text.split("\n")[0])
+
+    for text in separate_text:
+        prints = text.count("[citation needed]")
+        for i in range(prints):
+            cleaned_text = text.split("[citation needed]")
+            output_string += "Citation needed for : " + "'" + cleaned_text[i].strip() + "'" + "\n"
+
+    print(output_string)
+    return output_string
 
 
-import json
 
-json_data = json.dumps(cleaned_jobs)
-print(json_data)
-with open("bayt_json_data.json", "w") as file:
-    file.write(json_data)
+# if __name__ == "__main__":
+
+#     URL = "https://en.wikipedia.org/wiki/History_of_Mexico"
+#     get_citations_needed_count(URL)
+#     get_citations_needed_report(URL)
